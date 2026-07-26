@@ -6,6 +6,7 @@ globalThis.Image = class Image {};
 const { default: Player } = await import('../js/Player.js');
 const { createPopulation, nextGeneration } = await import('../js/aiUtil.js');
 const { selectFeaturedCar } = await import('../js/featuredCar.js');
+const { drawGame } = await import('../js/render.js');
 
 test('a car records the neural-network state used for its decision', () => {
     const car = new Player();
@@ -42,4 +43,36 @@ test('the featured car stays stable on a tie and falls back to the best survivor
     assert.equal(selectFeaturedCar([first, current], current), current);
     assert.equal(selectFeaturedCar([first, best], current), best);
     assert.equal(selectFeaturedCar([], current), null);
+});
+
+test('a frame clears old pixels and draws exactly one featured AI car', () => {
+    let clears = 0;
+    let trafficDraws = 0;
+    let featuredDraws = 0;
+    const context = {
+        canvas: { width: 509, height: 900 },
+        clearRect() { clears++; },
+        drawImage() {},
+        save() {},
+        restore() {},
+        strokeRect() {},
+        fillRect() {},
+        fillText() {}
+    };
+    const enemies = Array.from({ length: 3 }, () => ({
+        show() { trafficDraws++; }
+    }));
+    const featured = {
+        x: 36,
+        y: 720,
+        width: 70,
+        height: 138,
+        show() { featuredDraws++; }
+    };
+
+    drawGame(context, enemies, featured);
+
+    assert.equal(clears, 1);
+    assert.equal(trafficDraws, 3);
+    assert.equal(featuredDraws, 1);
 });

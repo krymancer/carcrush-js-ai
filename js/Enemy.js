@@ -1,6 +1,6 @@
 import {random} from './util.js'
 
-export default class Player {
+export default class Enemy {
     constructor(context) {
         this.context = context;
         this.positions = [36,136,236,336];

@@ -1,7 +1,8 @@
-import { drawBackground, loadAssets } from './image.js';
+import { loadAssets } from './image.js';
 import Enemy from './Enemy.js';
 import { createPopulation, nextGeneration } from './aiUtil.js';
 import { selectFeaturedCar } from './featuredCar.js';
+import { drawGame } from './render.js';
 import { drawDashboard } from './viz/charts.js';
 import { drawNetwork } from './viz/network.js';
 
@@ -39,7 +40,6 @@ function onKeyDown(event) {
 }
 
 function update() {
-    drawBackground(context);
     enemies.forEach((enemy) => enemy.update());
 
     const passedEnemies = enemies.filter((enemy) => enemy.die()).length;
@@ -57,12 +57,11 @@ function update() {
 
     enemies.forEach((enemy) => {
         if (enemy.die()) enemy.reset();
-        enemy.show();
     });
 
     if (activeCars.length === 0) evolve();
     featuredCar = selectFeaturedCar(activeCars, featuredCar);
-    featuredCar?.show(context);
+    drawGame(context, enemies, featuredCar);
 
     drawStats(statsContext);
     drawGenerationTable(tableContext);
