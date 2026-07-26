@@ -1,8 +1,5 @@
 import Player from './Player.js'
-
-function reset(enemys){
-    enemys.forEach(enemy => enemy.reset());
-}
+import { resetTraffic } from './traffic.js';
 
 export function createPopulation(totalPopulation) {
     let allCars = [];
@@ -18,7 +15,7 @@ export function createPopulation(totalPopulation) {
 
 export function nextGeneration(allCars,activeCars,generation,enemies) {
     generation++;
-    reset(enemies);
+    resetTraffic(enemies);
     normalizeFitness(allCars);
     activeCars = generate(allCars);
     allCars = activeCars.slice();

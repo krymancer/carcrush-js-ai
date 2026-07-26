@@ -23,6 +23,10 @@ The dashboard shows the simulation as it learns:
 - only the best surviving car is drawn; when it crashes, the view follows the
   next-best survivor while the full population continues training—the featured
   car has a gold `AI` marker, while the green cars are obstacle traffic;
+- enemy traffic is respawned with a fixed safety gap so its sprites never
+  overlap;
+- AI lane changes are rate-limited and visually interpolated to prevent rapid
+  left/right decisions from appearing as two cars;
 - live generation, score, population, and best-ever statistics;
 - a table of the most recent generations;
 - best and average score history;

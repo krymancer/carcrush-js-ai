@@ -1,12 +1,12 @@
 import {random} from './util.js'
 
 export default class Enemy {
-    constructor(context) {
+    constructor(context, spawnY = -140) {
         this.context = context;
         this.positions = [36,136,236,336];
 
         this.x = this.positions[random(0,4)];
-        this.y = -70 * random(2,4) + 140;
+        this.y = spawnY;
 
         this.asset = new Image();
         this.asset.src = './assets/green.png'
@@ -17,9 +17,9 @@ export default class Enemy {
         this.width = 70;
     }
 
-    reset(){
+    reset(spawnY = -140){
         this.x = this.positions[random(0,4)];
-        this.y = -70 * random(2,4);
+        this.y = spawnY;
     }
 
     show() {

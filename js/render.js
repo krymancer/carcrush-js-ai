@@ -14,7 +14,8 @@ function drawFeaturedMarker(context, car) {
     const padding = 5;
     const labelWidth = 30;
     const labelHeight = 20;
-    const labelX = car.x + car.width - labelWidth;
+    const renderX = car.displayX ?? car.x;
+    const labelX = renderX + car.width - labelWidth;
     const labelY = car.y - labelHeight - padding;
 
     context.save();
@@ -23,7 +24,7 @@ function drawFeaturedMarker(context, car) {
     context.shadowColor = '#f5b83d';
     context.shadowBlur = 10;
     context.strokeRect(
-        car.x - padding,
+        renderX - padding,
         car.y - padding,
         car.width + padding * 2,
         car.height + padding * 2

@@ -1,8 +1,8 @@
 import { loadAssets } from './image.js';
-import Enemy from './Enemy.js';
 import { createPopulation, nextGeneration } from './aiUtil.js';
 import { selectFeaturedCar } from './featuredCar.js';
 import { drawGame } from './render.js';
+import { createTraffic, recyclePassedTraffic } from './traffic.js';
 import { drawDashboard } from './viz/charts.js';
 import { drawNetwork } from './viz/network.js';
 
@@ -22,7 +22,7 @@ let champion = null;
 let networkTarget = 'leading';
 let showVisualizations = true;
 
-const enemies = [new Enemy(context), new Enemy(context), new Enemy(context)];
+const enemies = createTraffic(context);
 let { allCars, activeCars } = createPopulation(POPULATION);
 let featuredCar = selectFeaturedCar(activeCars);
 
@@ -55,9 +55,7 @@ function update() {
         car.think(enemies);
     }
 
-    enemies.forEach((enemy) => {
-        if (enemy.die()) enemy.reset();
-    });
+    recyclePassedTraffic(enemies);
 
     if (activeCars.length === 0) evolve();
     featuredCar = selectFeaturedCar(activeCars, featuredCar);
