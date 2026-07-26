@@ -21,6 +21,10 @@ export default class Player {
 
         this.left = 0;
         this.right = 0;
+        this.lastInputs = null;
+        this.lastHidden = null;
+        this.lastOutput = null;
+        this.lastDecision = null;
 
         if (brain instanceof NeuralNetwork) {
             this.brain = brain.copy();
@@ -63,43 +67,37 @@ export default class Player {
     }
 
     think(enemies) {
-        let inputs = [0, 1, 1, 1,0];
-        // x position of closest pipe
-        inputs[0] = map(this.x, 0, 509, 0, 1);
-
         const positions = [36, 136, 236, 336];
-        const cars = [0,0,0,0];
+        const laneIndex = (x) => Math.max(0, positions.indexOf(x));
+        const closest = enemies
+            .filter((enemy) => enemy.y <= this.y + this.height)
+            .sort((a, b) => b.y - a.y)
+            .slice(0, 3);
+        const pressure = new Array(positions.length).fill(0);
 
-        positions.forEach((position, index) => {
-            inputs[1] -= enemies[0].x == position ? 0.33 : 0
-            inputs[2] -= enemies[1].x == position ? 0.33 : 0
-            inputs[3] -= enemies[2].x == position ? 0.33 : 0
-
-            cars[index] += enemies[0].x == position ? 0.33 : 0
-            cars[index] += enemies[1].x == position ? 0.33 : 0
-            cars[index] += enemies[2].x == position ? 0.33 : 0
-
+        closest.forEach((enemy) => pressure[laneIndex(enemy.x)]++);
+        const safeLane = pressure.indexOf(Math.min(...pressure));
+        const enemyInputs = [0, 1, 2].map((index) => {
+            const enemy = closest[index];
+            return enemy ? (laneIndex(enemy.x) + 1) / positions.length : 0;
         });
+        const inputs = [
+            map(this.x, positions[0], positions[positions.length - 1], 0, 1),
+            ...enemyInputs,
+            safeLane / (positions.length - 1)
+        ];
 
-        let index;
+        const activations = this.brain.activations(inputs);
+        this.lastInputs = inputs;
+        this.lastHidden = activations.hidden;
+        this.lastOutput = activations.output;
 
-        // BruteForce
-        for(let i = 0;  i< cars.length; i++){
-            if(cars[i] === 0){
-               index = positions[i];
-                break;
-            }
-        }
-
-        inputs[4] = map(index,0,3,0,1); 
-
-        let action = this.brain.predict(inputs);
-
-        if (action[0] > action[1]) {
+        if (activations.output[0] > activations.output[1]) {
+            this.lastDecision = 'RIGHT';
             this.move('RIGHT');
         } else {
+            this.lastDecision = 'LEFT';
             this.move('LEFT');
         }
-
     }
 }

@@ -39,6 +39,14 @@ function normalizeFitness(cars) {
         sum += car.score;
     });
 
+    if (sum === 0) {
+        const equalShare = 1 / cars.length;
+        cars.forEach(car => {
+            car.fitness = equalShare;
+        });
+        return;
+    }
+
     cars.forEach(car => {
         car.fitness = car.score / sum;
     });
@@ -47,10 +55,10 @@ function normalizeFitness(cars) {
 function poolSelection(cars) {
     let index = 0;
     let r = Math.random();
-    while (r > 0) {
+    while (r > 0 && index < cars.length) {
         r -= cars[index].fitness;
         index++;
     }
-    index--;
+    index = Math.min(cars.length - 1, Math.max(0, index - 1));
     return cars[index].copy();
 }

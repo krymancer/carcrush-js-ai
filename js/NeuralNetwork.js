@@ -59,7 +59,10 @@ export default class NeuralNetwork {
   }
 
   predict(input_array) {
+    return this.activations(input_array).output;
+  }
 
+  activations(input_array) {
     // Generating the Hidden Outputs
     let inputs = Matrix.fromArray(input_array);
     let hidden = Matrix.multiply(this.weights_ih, inputs);
@@ -72,8 +75,10 @@ export default class NeuralNetwork {
     output.add(this.bias_o);
     output.map(this.activation_function.func);
 
-    // Sending back to the caller!
-    return output.toArray();
+    return {
+      hidden: hidden.toArray(),
+      output: output.toArray()
+    };
   }
 
   setLearningRate(learning_rate = 0.1) {
