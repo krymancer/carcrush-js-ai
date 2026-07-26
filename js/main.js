@@ -1,6 +1,7 @@
 import { drawBackground, loadAssets } from './image.js';
 import Enemy from './Enemy.js';
 import { createPopulation, nextGeneration } from './aiUtil.js';
+import { selectFeaturedCar } from './featuredCar.js';
 import { drawDashboard } from './viz/charts.js';
 import { drawNetwork } from './viz/network.js';
 
@@ -22,6 +23,7 @@ let showVisualizations = true;
 
 const enemies = [new Enemy(context), new Enemy(context), new Enemy(context)];
 let { allCars, activeCars } = createPopulation(POPULATION);
+let featuredCar = selectFeaturedCar(activeCars);
 
 loadAssets();
 document.addEventListener('keydown', onKeyDown);
@@ -57,9 +59,10 @@ function update() {
         if (enemy.die()) enemy.reset();
         enemy.show();
     });
-    activeCars.forEach((car) => car.show(context));
 
     if (activeCars.length === 0) evolve();
+    featuredCar = selectFeaturedCar(activeCars, featuredCar);
+    featuredCar?.show(context);
 
     drawStats(statsContext);
     drawGenerationTable(tableContext);
@@ -90,6 +93,7 @@ function evolve() {
 }
 
 function leadingCar() {
+    if (featuredCar?.lastInputs) return featuredCar;
     return activeCars.find((car) => car.lastInputs) ?? null;
 }
 

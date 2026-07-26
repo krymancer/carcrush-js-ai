@@ -20,6 +20,8 @@ Then open <http://localhost:8080>.
 
 The dashboard shows the simulation as it learns:
 
+- only the best surviving car is drawn; when it crashes, the view follows the
+  next-best survivor while the full population continues training;
 - live generation, score, population, and best-ever statistics;
 - a table of the most recent generations;
 - best and average score history;

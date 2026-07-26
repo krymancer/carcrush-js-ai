@@ -5,6 +5,7 @@ globalThis.Image = class Image {};
 
 const { default: Player } = await import('../js/Player.js');
 const { createPopulation, nextGeneration } = await import('../js/aiUtil.js');
+const { selectFeaturedCar } = await import('../js/featuredCar.js');
 
 test('a car records the neural-network state used for its decision', () => {
     const car = new Player();
@@ -31,4 +32,14 @@ test('a zero-score population can still evolve', () => {
     assert.equal(next.allCars.length, 8);
     assert.equal(next.activeCars.length, 8);
     assert.ok(next.allCars.every((car) => Number.isFinite(car.brain.weights_ih.data[0][0])));
+});
+
+test('the featured car stays stable on a tie and falls back to the best survivor', () => {
+    const first = { score: 4 };
+    const current = { score: 8 };
+    const best = { score: 12 };
+
+    assert.equal(selectFeaturedCar([first, current], current), current);
+    assert.equal(selectFeaturedCar([first, best], current), best);
+    assert.equal(selectFeaturedCar([], current), null);
 });
