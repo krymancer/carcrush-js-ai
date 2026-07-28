@@ -1,12 +1,12 @@
 import { loadAssets } from './image.js';
-import { createPopulation, nextGeneration } from './aiUtil.js';
+import { CONFIG } from './config.js';
 import { selectFeaturedCar } from './featuredCar.js';
+import { createPopulation, nextGeneration } from './ga.js';
 import { drawGame } from './render.js';
-import { createTraffic, recyclePassedTraffic } from './traffic.js';
+import { createTraffic, recyclePassedTraffic, resetTraffic } from './traffic.js';
 import { drawDashboard } from './viz/charts.js';
 import { drawNetwork } from './viz/network.js';
 
-const POPULATION = 1000;
 const canvas = document.getElementById('game');
 const context = canvas.getContext('2d');
 const statsContext = document.getElementById('stats').getContext('2d');
@@ -23,7 +23,8 @@ let networkTarget = 'leading';
 let showVisualizations = true;
 
 const enemies = createTraffic(context);
-let { allCars, activeCars } = createPopulation(POPULATION);
+let allCars = createPopulation();
+let activeCars = [...allCars];
 let featuredCar = selectFeaturedCar(activeCars);
 
 loadAssets();
@@ -50,7 +51,7 @@ function update() {
             continue;
         }
 
-        car.score += passedEnemies;
+        car.recordProgress(passedEnemies);
         bestScore = Math.max(bestScore, car.score);
         car.think(enemies);
     }
@@ -83,10 +84,10 @@ function evolve() {
         champion = { brain: bestCar.brain.copy(), score: bestCar.score };
     }
 
-    const next = nextGeneration(allCars, activeCars, generation, enemies);
-    allCars = next.allCars;
-    activeCars = next.activeCars;
-    generation = next.generation;
+    resetTraffic(enemies);
+    generation++;
+    allCars = nextGeneration(allCars);
+    activeCars = [...allCars];
 }
 
 function leadingCar() {
@@ -110,7 +111,12 @@ function drawVisualizations() {
 
     if (networkTarget === 'champion' && champion) {
         const activations = champion.brain.activations(leading.lastInputs);
-        const decision = activations.output[0] > activations.output[1] ? 'RIGHT' : 'LEFT';
+        const actions = ['LEFT', 'STAY', 'RIGHT'];
+        const actionIndex = activations.output.reduce(
+            (best, value, index, values) => value > values[best] ? index : best,
+            0
+        );
+        const decision = actions[actionIndex];
         drawNetwork(
             networkContext,
             champion.brain,
@@ -174,10 +180,10 @@ function drawStats(ctx) {
     ctx.stroke();
 
     const configuration = [
-        ['population', String(POPULATION)],
-        ['network', '5 → 10 → 2'],
-        ['mutation', '10% · σ 0.5'],
-        ['selection', 'fitness roulette']
+        ['population', String(CONFIG.POPULATION)],
+        ['network', `${CONFIG.NN_INPUTS} → ${CONFIG.NN_HIDDEN} → ${CONFIG.NN_OUTPUTS}`],
+        ['elite carried', String(CONFIG.ELITE_COUNT)],
+        ['mutation', `${Math.round(CONFIG.MUTATION_RATE * 100)}% · σ ${CONFIG.MUTATION_STRENGTH}`]
     ];
     y += 14;
     ctx.font = '12px system-ui, sans-serif';

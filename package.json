@@ -5,6 +5,7 @@
   "type": "module",
   "description": "A neuroevolution traffic-dodging experiment built with vanilla JavaScript.",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "benchmark": "node scripts/benchmark.mjs"
   }
 }

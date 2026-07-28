@@ -16,6 +16,17 @@ python3 -m http.server 8080
 
 Then open <http://localhost:8080>.
 
+Run the automated checks and deterministic learning benchmark with:
+
+```sh
+npm test
+npm run benchmark
+```
+
+The benchmark succeeds only when an evolved car passes 100 obstacles within 50
+generations. Optional arguments are `seed`, `generations`, `target score`, and
+`population size`, in that order.
+
 ## Visualization
 
 The dashboard shows the simulation as it learns:
@@ -40,6 +51,8 @@ panels while the simulation continues.
 
 ## Neural network
 
-Each car uses five normalized inputs (its lane, three nearby traffic lanes, and
-the least occupied lane), ten hidden nodes, and two outputs (`RIGHT` and `LEFT`).
-The population size is 1,000 and mutation is applied to selected offspring.
+Each car uses five normalized inputs: its current lane plus the distance to the
+nearest approaching obstacle in each of the four lanes. Eight hidden nodes feed
+three actions (`LEFT`, `STAY`, and `RIGHT`). The population size is 1,000;
+fitness combines dense survival time with passed-traffic score, the 50 strongest
+brains are preserved unchanged, and selected offspring are mutated exactly once.

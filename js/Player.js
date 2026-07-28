@@ -1,111 +1,122 @@
+import { CONFIG } from './config.js';
 import NeuralNetwork from './NeuralNetwork.js';
-import { map, mutate, random } from './util.js';
+import { clamp, randomInt } from './util.js';
 
-const LANE_CHANGE_COOLDOWN = 8;
-const DISPLAY_MOVE_SPEED = 18;
+const ACTIONS = Object.freeze(['LEFT', 'STAY', 'RIGHT']);
+const COLORS = Object.freeze(['blue', 'gray', 'pinck', 'pruple']);
 
 export default class Player {
-    constructor(brain) {
-        this.x = 36;
+    constructor(brain = null, { mutate = true, random = Math.random } = {}) {
+        this.random = random;
+        this.lane = 1;
+        this.x = CONFIG.LANES[this.lane];
         this.displayX = this.x;
-        this.y = 720;
-        this.colors = ['blue', 'gray', 'pinck', 'pruple', 'gray'];
-        this.color = this.colors[random(0, 5)]
-        this.asset = new Image();
-        this.asset.src = `./assets/${this.color}.png`
-
-        this.offset = 100;
-
-        this.height = 138;
-        this.width = 70;
-
+        this.y = CONFIG.PLAYER_Y;
+        this.width = CONFIG.CAR_WIDTH;
+        this.height = CONFIG.CAR_HEIGHT;
         this.score = 0;
-        this.lift = -12;
+        this.survivalTicks = 0;
         this.fitness = 0;
-
-        this.left = 0;
-        this.right = 0;
         this.lastInputs = null;
         this.lastHidden = null;
         this.lastOutput = null;
-        this.lastDecision = null;
+        this.lastDecision = 'STAY';
         this.framesUntilMove = 0;
+
+        this.color = COLORS[randomInt(0, COLORS.length, random)];
+        this.asset = new Image();
+        this.asset.src = `./assets/${this.color}.png`;
 
         if (brain instanceof NeuralNetwork) {
             this.brain = brain.copy();
-            this.brain.mutate(mutate);
+            if (mutate) {
+                this.brain.mutate(
+                    CONFIG.MUTATION_RATE,
+                    CONFIG.MUTATION_STRENGTH,
+                    random
+                );
+            }
         } else {
-            this.brain = new NeuralNetwork(5, 10, 2);
+            this.brain = new NeuralNetwork(
+                CONFIG.NN_INPUTS,
+                CONFIG.NN_HIDDEN,
+                CONFIG.NN_OUTPUTS,
+                random
+            );
         }
     }
 
     collide(enemy) {
-        if (this.x === enemy.x) {
-            if (this.y <= (enemy.y + enemy.height) && (this.y + this.height) > enemy.y) {
-                return true;
-            }
-        }
+        const sameLane = this.lane === (enemy.lane ?? CONFIG.LANES.indexOf(enemy.x));
+        const overlapsY = this.y <= enemy.y + enemy.height && this.y + this.height > enemy.y;
+        return sameLane && overlapsY;
     }
 
     show(context) {
         const distance = this.x - this.displayX;
-        this.displayX += Math.sign(distance) * Math.min(Math.abs(distance), DISPLAY_MOVE_SPEED);
+        this.displayX += Math.sign(distance)
+            * Math.min(Math.abs(distance), CONFIG.DISPLAY_MOVE_SPEED);
         context.drawImage(this.asset, this.displayX, this.y);
     }
 
     move(direction) {
-        if (this.x !== 36) {
-            if (direction === 'LEFT') {
-                this.x -= this.offset;
-                this.left++;
-            }
-        }
-
-        if (this.x !== 336) {
-            if (direction === 'RIGHT') {
-                this.x += this.offset;
-                this.right++;
-            }
-        }
+        const delta = direction === 'LEFT' ? -1 : direction === 'RIGHT' ? 1 : 0;
+        const nextLane = clamp(this.lane + delta, 0, CONFIG.LANES.length - 1);
+        if (nextLane === this.lane) return false;
+        this.lane = nextLane;
+        this.x = CONFIG.LANES[this.lane];
+        return true;
     }
 
-    copy() {
-        return new Player(this.brain);
+    sense(enemies) {
+        const clearances = new Array(CONFIG.LANES.length).fill(1);
+
+        for (const enemy of enemies) {
+            if (enemy.y > this.y + this.height) continue;
+            const lane = enemy.lane ?? CONFIG.LANES.indexOf(enemy.x);
+            if (lane < 0) continue;
+            const gap = Math.max(0, this.y - (enemy.y + enemy.height));
+            const normalizedGap = clamp(gap / CONFIG.SENSOR_RANGE, 0, 1);
+            clearances[lane] = Math.min(clearances[lane], normalizedGap);
+        }
+
+        return [this.lane / (CONFIG.LANES.length - 1), ...clearances];
     }
 
     think(enemies) {
-        const positions = [36, 136, 236, 336];
-        const laneIndex = (x) => Math.max(0, positions.indexOf(x));
-        const closest = enemies
-            .filter((enemy) => enemy.y <= this.y + this.height)
-            .sort((a, b) => b.y - a.y)
-            .slice(0, 3);
-        const pressure = new Array(positions.length).fill(0);
-
-        closest.forEach((enemy) => pressure[laneIndex(enemy.x)]++);
-        const safeLane = pressure.indexOf(Math.min(...pressure));
-        const enemyInputs = [0, 1, 2].map((index) => {
-            const enemy = closest[index];
-            return enemy ? (laneIndex(enemy.x) + 1) / positions.length : 0;
-        });
-        const inputs = [
-            map(this.x, positions[0], positions[positions.length - 1], 0, 1),
-            ...enemyInputs,
-            safeLane / (positions.length - 1)
-        ];
-
+        const inputs = this.sense(enemies);
         const activations = this.brain.activations(inputs);
+        const actionIndex = activations.output.reduce(
+            (best, value, index, values) => value > values[best] ? index : best,
+            0
+        );
+
         this.lastInputs = inputs;
         this.lastHidden = activations.hidden;
         this.lastOutput = activations.output;
+        this.lastDecision = ACTIONS[actionIndex];
 
-        this.lastDecision = activations.output[0] > activations.output[1] ? 'RIGHT' : 'LEFT';
         if (this.framesUntilMove > 0) {
             this.framesUntilMove--;
             return;
         }
+        if (this.lastDecision === 'STAY') return;
 
-        this.move(this.lastDecision);
-        this.framesUntilMove = LANE_CHANGE_COOLDOWN;
+        if (this.move(this.lastDecision)) {
+            this.framesUntilMove = CONFIG.LANE_CHANGE_COOLDOWN;
+        }
+    }
+
+    recordProgress(passedTraffic = 0) {
+        this.survivalTicks++;
+        this.score += passedTraffic;
+    }
+
+    fitnessValue() {
+        return this.survivalTicks + this.score * CONFIG.PASS_BONUS;
+    }
+
+    copy({ mutate = true, random = this.random } = {}) {
+        return new Player(this.brain, { mutate, random });
     }
 }

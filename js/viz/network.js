@@ -1,5 +1,5 @@
-const INPUT_LABELS = ['car lane', 'traffic 1', 'traffic 2', 'traffic 3', 'safe lane'];
-const OUTPUT_LABELS = ['RIGHT', 'LEFT'];
+const INPUT_LABELS = ['car lane', 'lane 1 gap', 'lane 2 gap', 'lane 3 gap', 'lane 4 gap'];
+const OUTPUT_LABELS = ['LEFT', 'STAY', 'RIGHT'];
 
 function activationFill(value) {
     const t = Math.max(0, Math.min(1, value ?? 0));
@@ -24,9 +24,9 @@ export function drawNetwork(ctx, network, activations, inputs, decision, subtitl
     const top = 58;
     const bottom = height - 34;
     const columns = [102, width / 2, width - 102];
-    const inputPositions = column(network.input_nodes, columns[0], top, bottom);
-    const hiddenPositions = column(network.hidden_nodes, columns[1], top, bottom);
-    const outputPositions = column(network.output_nodes, columns[2], top, bottom);
+    const inputPositions = column(network.inputs, columns[0], top, bottom);
+    const hiddenPositions = column(network.hidden, columns[1], top, bottom);
+    const outputPositions = column(network.outputs, columns[2], top, bottom);
 
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -39,13 +39,13 @@ export function drawNetwork(ctx, network, activations, inputs, decision, subtitl
     ctx.textAlign = 'right';
     ctx.fillText(subtitle, width - 16, 26);
 
-    drawEdges(ctx, inputPositions, hiddenPositions, network.weights_ih);
-    drawEdges(ctx, hiddenPositions, outputPositions, network.weights_ho);
+    drawEdges(ctx, inputPositions, hiddenPositions, network.weightsIH, network.inputs);
+    drawEdges(ctx, hiddenPositions, outputPositions, network.weightsHO, network.hidden);
     drawNodes(ctx, inputPositions, inputs, radius, INPUT_LABELS, 'left');
     drawNodes(ctx, hiddenPositions, activations.hidden, radius);
     drawNodes(ctx, outputPositions, activations.output, radius, OUTPUT_LABELS, 'right');
 
-    const selectedIndex = decision === 'RIGHT' ? 0 : 1;
+    const selectedIndex = OUTPUT_LABELS.indexOf(decision);
     const selected = outputPositions[selectedIndex];
     ctx.strokeStyle = '#f5b83d';
     ctx.shadowColor = '#f5b83d';
@@ -63,10 +63,10 @@ export function drawNetwork(ctx, network, activations, inputs, decision, subtitl
     ctx.restore();
 }
 
-function drawEdges(ctx, from, to, weights) {
+function drawEdges(ctx, from, to, weights, stride) {
     for (let row = 0; row < to.length; row++) {
         for (let columnIndex = 0; columnIndex < from.length; columnIndex++) {
-            const weight = weights.data[row][columnIndex];
+            const weight = weights[row * stride + columnIndex];
             const magnitude = Math.min(1, Math.abs(weight));
             ctx.strokeStyle = weight >= 0
                 ? `rgba(90, 220, 160, ${magnitude * 0.6})`
