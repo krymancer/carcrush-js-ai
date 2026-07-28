@@ -1,0 +1,11 @@
+{
+  "name": "carcrush-js-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A neuroevolution traffic-dodging experiment built with vanilla JavaScript.",
+  "scripts": {
+    "test": "node --test",
+    "benchmark": "node scripts/benchmark.mjs"
+  }
+}

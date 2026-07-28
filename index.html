@@ -1,28 +1,157 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joguin</title>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A neuroevolution experiment where a population of cars learns to dodge traffic."
+    />
+    <title>CarCrush AI — Neuroevolution Traffic</title>
+    <link rel="icon" href="data:," />
     <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #080b11;
+        color: #f5f7fb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(245, 180, 55, 0.16), transparent 34rem),
+          linear-gradient(145deg, #111827 0%, #080b11 58%, #111018 100%);
+      }
+
+      #stage {
+        width: min(100%, 1370px);
+        display: grid;
+        grid-template-columns: minmax(230px, 300px) minmax(360px, 509px) minmax(320px, 460px);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel-column {
+        display: grid;
+        gap: 14px;
+      }
+
+      .card {
+        overflow: hidden;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.045);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(12px);
+      }
+
+      canvas.viz {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      #game {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 94vh;
+        border-radius: 14px;
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.56);
+      }
+
+      .hint {
+        color: rgba(224, 231, 243, 0.58);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      kbd {
+        padding: 2px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.86);
+        font: inherit;
+      }
+
+      @media (max-width: 1050px) {
         body {
-            background: #181717;
-            margin: 0;
-            overflow: hidden;
+          padding: 16px;
+        }
+
+        #stage {
+          grid-template-columns: minmax(230px, 300px) minmax(360px, 509px);
+          justify-content: center;
+        }
+
+        #viz-column {
+          grid-column: 1 / -1;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #viz-column .hint {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 720px) {
+        #stage {
+          display: flex;
+          flex-direction: column;
+          width: min(100%, 509px);
         }
 
         #game {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            left: 0;
-            margin: auto;
+          order: -1;
+          max-height: none;
         }
-    </style>    
-</head>
-<body>
-    <canvas id="game" width="509" height="900"></canvas>
-</body>
-<script type="module" src='js/main.js'></script>
+
+        .panel-column,
+        #viz-column {
+          width: 100%;
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="stage">
+      <aside class="panel-column" aria-label="Simulation statistics">
+        <section class="card">
+          <canvas id="stats" class="viz" width="300" height="430"></canvas>
+        </section>
+        <section class="card">
+          <canvas id="gentable" class="viz" width="300" height="360"></canvas>
+        </section>
+      </aside>
+
+      <canvas id="game" width="509" height="900" aria-label="CarCrush AI simulation"></canvas>
+
+      <aside id="viz-column" class="panel-column" aria-label="Evolution visualizations">
+        <section class="card">
+          <canvas id="network" class="viz" width="460" height="380"></canvas>
+        </section>
+        <section class="card">
+          <canvas id="charts" class="viz" width="460" height="480"></canvas>
+        </section>
+        <div class="hint">
+          <kbd>N</kbd> leading / champion network &nbsp;·&nbsp; <kbd>V</kbd> pause panels
+        </div>
+      </aside>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
 </html>

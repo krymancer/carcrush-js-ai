@@ -1,38 +1,33 @@
-import {random} from './util.js'
+import { CONFIG } from './config.js';
+import { randomInt } from './util.js';
 
-export default class Player {
-    constructor(context) {
+export default class Enemy {
+    constructor(context, spawnY = CONFIG.TRAFFIC_START_Y, random = Math.random) {
         this.context = context;
-        this.positions = [36,136,236,336];
-
-        this.x = this.positions[random(0,4)];
-        this.y = -70 * random(2,4) + 140;
-
+        this.random = random;
         this.asset = new Image();
-        this.asset.src = './assets/green.png'
-
-        this.velocity = 10;
-
-        this.height = 138;
-        this.width = 70;
+        this.asset.src = './assets/green.png';
+        this.velocity = CONFIG.TRAFFIC_SPEED;
+        this.height = CONFIG.CAR_HEIGHT;
+        this.width = CONFIG.CAR_WIDTH;
+        this.reset(spawnY);
     }
 
-    reset(){
-        this.x = this.positions[random(0,4)];
-        this.y = -70 * random(2,4);
+    reset(spawnY = CONFIG.TRAFFIC_START_Y) {
+        this.lane = randomInt(0, CONFIG.LANES.length, this.random);
+        this.x = CONFIG.LANES[this.lane];
+        this.y = spawnY;
     }
 
     show() {
         this.context.drawImage(this.asset, this.x, this.y);
     }
 
-   update(){
-       this.y += this.velocity;
-   }
+    update() {
+        this.y += this.velocity;
+    }
 
-   die(){
-       if(this.y > 900 + 200){
-           return true;
-       }
-   }
+    die() {
+        return this.y > CONFIG.CANVAS_HEIGHT + 200;
+    }
 }
