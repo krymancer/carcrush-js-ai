@@ -5,6 +5,8 @@ each controlled by a small neural network, learns to change lanes and avoid
 oncoming traffic. When every car crashes, fitness-weighted selection creates the
 next generation from the most successful networks.
 
+Play it at <https://krymancer.github.io/carcrush-js-ai/>.
+
 ## Run locally
 
 The project uses native JavaScript modules and has no build step. Serve the
